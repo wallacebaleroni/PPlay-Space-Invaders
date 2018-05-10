@@ -1,3 +1,3 @@
-# PPlay-Space-Invaders
+# PPlay Space Invaders
 
 Space Invaders on PPlay
