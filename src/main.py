@@ -37,7 +37,7 @@ def main():
 
     mouse_input = Mouse()
 
-    background = GameImage("../img/camaro-2017-1.jpg")
+    background = GameImage("../img/background_menu.jpg")
 
     bt_play = Sprite("../img/jogar.png", 2)
     bt_difficulty = Sprite("../img/dificuldade.png", 1)
@@ -75,7 +75,7 @@ def game():
     p_window = Window(WINDOW_WIDTH, WINDOW_HEIGHT)
     p_window.set_title("Space Invaders")
 
-    background = GameImage("../img/background.png")
+    background = GameImage("../img/background_game.png")
 
     spaceship = Sprite("../img/spaceship.png")
     spaceship.set_position(50, WINDOW_HEIGHT - 50)
@@ -171,7 +171,7 @@ def menu_difficulty():
 
     mouse_input = Mouse()
 
-    background = GameImage("../img/camaro-2017-1.jpg")
+    background = GameImage("../img/background_menu.jpg")
 
     bt_easy = Sprite("../img/facil.png", 1)
     bt_medium = Sprite("../img/medio.png", 1)
