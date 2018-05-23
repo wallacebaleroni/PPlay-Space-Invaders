@@ -32,9 +32,9 @@ ENEMY_SPACING_Y = ENEMY_HEIGHT
 BUTTON_BORDER = 30
 BUTTON_SPACING = 20
 
-DIF_EASY = 1
-DIF_MEDI = 2
-DIF_HARD = 3
+DIF_EASY = 3
+DIF_MEDI = 4
+DIF_HARD = 5
 
 LEFT = -1
 RIGHT = 1
@@ -61,19 +61,26 @@ def main():
 
     difficulty = DIF_EASY
 
+    click_cooldown_time = 0.75
+    total_time = 0
+    last_click = 0
+
     # Main menu loop
     while True:
         if mouse_input.is_over_object(bt_play):
             bt_play.set_curr_frame(1)
-            if mouse_input.is_button_pressed(1):
+            if mouse_input.is_button_pressed(1) and total_time - last_click > click_cooldown_time:
                 game(difficulty)
+                last_click = total_time
         else:
             bt_play.set_curr_frame(0)
-        if mouse_input.is_over_object(bt_difficulty) and mouse_input.is_button_pressed(1):
+        if mouse_input.is_over_object(bt_difficulty) and mouse_input.is_button_pressed(1) and total_time - last_click > click_cooldown_time:
             difficulty = menu_difficulty()
-        if mouse_input.is_over_object(bt_ranking) and mouse_input.is_button_pressed(1):
+            last_click = total_time
+        if mouse_input.is_over_object(bt_ranking) and mouse_input.is_button_pressed(1) and total_time - last_click > click_cooldown_time:
             print("Ranking")
-        if mouse_input.is_over_object(bt_exit) and mouse_input.is_button_pressed(1):
+            last_click = total_time
+        if mouse_input.is_over_object(bt_exit) and mouse_input.is_button_pressed(1) and total_time - last_click > click_cooldown_time:
             return
 
         background.draw()
@@ -83,6 +90,9 @@ def main():
         bt_exit.draw()
 
         game_window.update()
+
+        delta_time = game_window.delta_time()
+        total_time += delta_time
 
 
 def game(difficulty):
@@ -148,9 +158,10 @@ def game(difficulty):
         for shot in shots:
             for i in range(len(enemies)):
                 for j in range(len(enemies[0])):
-                    if enemies[i][j] is not None:
+                    if alive_enemies[i][j] == 1:
                         if Collision.collided(shot, enemies[i][j]):
                             alive_enemies[i][j] = 0
+                            shots.remove(shot)
 
 
         background.draw()
