@@ -3,6 +3,7 @@ from PPlay.gameimage import *
 from PPlay.sprite import *
 from PPlay.keyboard import *
 from PPlay.mouse import *
+from PPlay.collision import *
 
 
 WINDOW_WIDTH = 600
@@ -60,6 +61,7 @@ def main():
 
     difficulty = DIF_EASY
 
+    # Main menu loop
     while True:
         if mouse_input.is_over_object(bt_play):
             bt_play.set_curr_frame(1)
@@ -99,7 +101,7 @@ def game(difficulty):
     shot_speed = 4 * BASE_SPEED
 
     # create enemies
-    enemies = create_monsters(6, 2)
+    enemies, alive_enemies = create_monsters(6, 2)
     if enemies is None:
         return
 
@@ -131,22 +133,31 @@ def game(difficulty):
         elif kb.key_pressed("ESC"):
             return
 
+        # update enemies positions
+        if total_time - last_enemy_move > enemy_speed:
+            enemy_dir_x, enemy_dir_y = move_monsters(enemies, enemy_dir_x, enemy_dir_y)
+            last_enemy_move = total_time
+
         # update shots positions
         for shot in shots:
             shot.set_position(shot.x, shot.y - shot_speed * delta_time)
             if shot.y <= 0 - SHOT_SIZE_Y:
                 shots.remove(shot)
 
-        # update enemies positions
-        if total_time - last_enemy_move > enemy_speed:
-            enemy_dir_x, enemy_dir_y = move_monsters(enemies, enemy_dir_x, enemy_dir_y)
-            last_enemy_move = total_time
+        # check collisions
+        for shot in shots:
+            for i in range(len(enemies)):
+                for j in range(len(enemies[0])):
+                    if enemies[i][j] is not None:
+                        if Collision.collided(shot, enemies[i][j]):
+                            alive_enemies[i][j] = 0
+
 
         background.draw()
         spaceship.draw()
         for shot in shots:
             shot.draw()
-        draw_monsters(enemies)
+        draw_monsters(enemies, alive_enemies)
         p_window.update()
 
         delta_time = p_window.delta_time()
@@ -188,22 +199,27 @@ def create_monsters(w, h):
         print("Too much enemies")
         return None
     enemies = []
+    alive = []
     for i in range(h):
-        line = []
+        e_line = []
+        a_line = []
         for j in range(w):
             enemy = Sprite("../img/enemy.png")
             enemy.set_position(ENEMY_START_POS_X + j * (ENEMY_WIDTH + ENEMY_SPACING_X),
                                ENEMY_START_POS_Y + i * (ENEMY_HEIGHT + ENEMY_SPACING_Y))
-            line.append(enemy)
-        enemies.append(line)
-    return enemies
+            e_line.append(enemy)
+            a_line.append(1)
+        enemies.append(e_line)
+        alive.append(a_line)
+
+    return enemies, alive
 
 
-def draw_monsters(enemies):
-    for line in enemies:
-        for enemy in line:
-            if enemy is not None:
-                enemy.draw()
+def draw_monsters(enemies, alive):
+    for i in range(len(enemies)):
+        for j in range(len(enemies[0])):
+            if alive[i][j] == 1:
+                enemies[i][j].draw()
 
 
 def move_monsters(enemies, enemy_dir_x, enemy_dir_y):
