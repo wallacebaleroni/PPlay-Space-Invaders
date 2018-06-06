@@ -5,9 +5,6 @@ from PPlay.keyboard import *
 from PPlay.mouse import *
 from PPlay.collision import *
 
-
-
-
 import random
 
 
