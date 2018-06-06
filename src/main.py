@@ -5,6 +5,8 @@ from PPlay.keyboard import *
 from PPlay.mouse import *
 from PPlay.collision import *
 
+import random
+
 
 WINDOW_WIDTH = 600
 WINDOW_HEIGHT = 400
@@ -46,6 +48,8 @@ DOWN = 1
 def main():
     game_window = Window(WINDOW_WIDTH, WINDOW_HEIGHT)
 
+    game_window.set_title("Minimalist Space Invaders")
+
     mouse_input = Mouse()
 
     background = GameImage("../img/background_menu.jpg")
@@ -70,7 +74,7 @@ def main():
         if mouse_input.is_over_object(bt_play):
             bt_play.set_curr_frame(1)
             if mouse_input.is_button_pressed(1) and total_time - last_click > click_cooldown_time:
-                game(difficulty)
+                game(difficulty, 0)
                 last_click = total_time
         else:
             bt_play.set_curr_frame(0)
@@ -95,9 +99,9 @@ def main():
         total_time += delta_time
 
 
-def game(difficulty):
+def game(difficulty, score):
     p_window = Window(WINDOW_WIDTH, WINDOW_HEIGHT)
-    p_window.set_title("Space Invaders")
+    p_window.set_title("Minimalist Space Invaders")
     p_window.update()
 
     background = GameImage("../img/background_game.png")
@@ -109,6 +113,10 @@ def game(difficulty):
 
     shots = []
     shot_speed = 4 * BASE_SPEED
+
+    enemies_shots = []
+
+    lives = 3
 
     # create enemies
     enemies, alive_enemies = create_monsters(6, 2)
@@ -125,6 +133,9 @@ def game(difficulty):
     total_time = 0
     last_shot_time = 0
     last_enemy_move = 0
+    last_enemy_shot = 0
+
+    enemy_shot_cooldown = 1
 
     while True:
         # spaceship move
@@ -154,19 +165,73 @@ def game(difficulty):
             if shot.y <= 0 - SHOT_SIZE_Y:
                 shots.remove(shot)
 
-        # check collisions
+        # creates monsters shots
+        if total_time - last_enemy_shot > enemy_shot_cooldown:
+            # count how many alive
+            total = 0
+            for i in range(len(enemies)):
+                total += alive_enemies[i].count(1)
+            chosen = random.randint(0, total)
+
+            # makes the chosen shoot
+            it = 0
+            for i in range(len(enemies)):
+                for j in range(len(enemies[0])):
+                    if alive_enemies[i][j] == 1:
+                        if it == chosen:
+                            new_shot = Sprite("../img/shot.png")
+                            new_shot.set_position(enemies[i][j].x + ENEMY_WIDTH / 2, enemies[i][j].y)
+                            enemies_shots.append(new_shot)
+                        it += 1
+
+            last_enemy_shot = total_time
+
+        # updates monsters shots positions
+        for shot in enemies_shots:
+            shot.set_position(shot.x, shot.y + shot_speed * delta_time)
+            if shot.y <= 0 - SHOT_SIZE_Y:
+                shots.remove(shot)
+
+        # check spaceship shot collisions
         for shot in shots:
             for i in range(len(enemies)):
                 for j in range(len(enemies[0])):
                     if alive_enemies[i][j] == 1:
                         if Collision.collided(shot, enemies[i][j]):
                             alive_enemies[i][j] = 0
+                            score += difficulty * 10
                             shots.remove(shot)
 
+        # check enemies shot collisions
+        for shot in enemies_shots:
+            if Collision.collided(shot, spaceship):
+                lives -= 1
+                enemies_shots.remove(shot)
+
+        # check end of the game
+        if everyone_dead(alive_enemies):
+            print("YOU WIN")
+            print("Now the difficulty is: ", end="")
+            if difficulty == 1:
+                print("easy")
+            if difficulty == 2:
+                print("medium")
+            for i in range(3, difficulty):
+                print("very", end=" ")
+            if difficulty >= 3:
+                print("hard")
+            game(difficulty + 1, score)
+            return
+        if lives == 0:
+            print("YOU LOSE")
+            return
 
         background.draw()
         spaceship.draw()
+        p_window.draw_text(str(score), 0, 0, color=(255, 255, 255))
         for shot in shots:
+            shot.draw()
+        for shot in enemies_shots:
             shot.draw()
         draw_monsters(enemies, alive_enemies)
         p_window.update()
@@ -176,7 +241,8 @@ def game(difficulty):
 
 
 def menu_difficulty():
-    game_window = Window(600, 400)
+    game_window = Window(WINDOW_WIDTH, WINDOW_HEIGHT)
+    game_window.set_title("Minimalist Space Invaders")
 
     mouse_input = Mouse()
 
@@ -249,6 +315,15 @@ def move_monsters(enemies, enemy_dir_x, enemy_dir_y):
                 enemy.set_position(enemy.x + enemy_step_x * enemy_dir_x, enemy.y)
 
     return enemy_dir_x, enemy_dir_y
+
+
+def everyone_dead(alive):
+    for linha in alive:
+        for a in linha:
+            if a == 1:
+                return False
+    return True
+
 
 
 
