@@ -229,6 +229,7 @@ def game(difficulty, score):
         background.draw()
         spaceship.draw()
         p_window.draw_text(str(score), 0, 0, color=(255, 255, 255))
+        p_window.draw_text(str(lives), WINDOW_WIDTH - 10, 0, color=(255,255,255))
         for shot in shots:
             shot.draw()
         for shot in enemies_shots:
