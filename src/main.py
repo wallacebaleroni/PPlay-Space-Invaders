@@ -130,12 +130,17 @@ def game(difficulty, score):
     kb = Keyboard()
 
     shot_time = 0.1 * difficulty
+    super_shot_time = 1
     total_time = 0
     last_shot_time = 0
     last_enemy_move = 0
     last_enemy_shot = 0
+    shot_charging = False
+    current_charging_time = 0
+    charging_time = 1.5
 
     enemy_shot_cooldown = 1
+    jafoi = False
 
     while True:
         # spaceship move
@@ -145,13 +150,28 @@ def game(difficulty, score):
         elif kb.key_pressed("LEFT"):
             if spaceship.x >= 0:
                 spaceship.set_position(spaceship.x - spaceship_speed * delta_time, spaceship.y)
+
+        if total_time - last_shot_time >= super_shot_time and not jafoi and current_charging_time > charging_time:
+            print("Pode soltar")
+            jafoi = True
+
         if kb.key_pressed("SPACE"):
-            if total_time - last_shot_time >= shot_time:
-                new_shot = Sprite("../img/shot.png")
-                new_shot.set_position(spaceship.x + SPACESHIP_SIZE_X / 2, spaceship.y - SHOT_SIZE_Y)
+            shot_charging = True
+            current_charging_time += delta_time
+        elif shot_charging:
+            jafoi = False
+            if total_time - last_shot_time >= super_shot_time and current_charging_time > charging_time:
+                new_shot = Shot(spaceship.x, spaceship.y, True)
                 shots.append(new_shot)
                 last_shot_time = total_time
-        elif kb.key_pressed("ESC"):
+            elif total_time - last_shot_time >= shot_time:
+                new_shot = Shot(spaceship.x, spaceship.y, False)
+                shots.append(new_shot)
+                last_shot_time = total_time
+            shot_charging = False
+            current_charging_time = 0
+
+        if kb.key_pressed("ESC"):
             return
 
         # update enemies positions
@@ -197,10 +217,11 @@ def game(difficulty, score):
             for i in range(len(enemies)):
                 for j in range(len(enemies[0])):
                     if alive_enemies[i][j] == 1:
-                        if Collision.collided(shot, enemies[i][j]):
+                        if Collision.collided(shot.sprite, enemies[i][j]):
                             alive_enemies[i][j] = 0
                             score += difficulty * 10
-                            shots.remove(shot)
+                            if not shot.loaded:
+                                shots.remove(shot)
 
         # check enemies shot collisions
         for shot in enemies_shots:
@@ -223,7 +244,7 @@ def game(difficulty, score):
             game(difficulty + 1, score)
             return
         if lives == 0:
-            print("YOU LOSE")
+            print("YOU LOST")
             return
 
         background.draw()
@@ -326,6 +347,29 @@ def everyone_dead(alive):
     return True
 
 
+class Shot:
+    def __init__(self, s_pos_x, s_pos_y, loaded):
+        self.x = s_pos_x + SPACESHIP_SIZE_X / 2
+        self.y = s_pos_y - SHOT_SIZE_Y
+
+        self.loaded = loaded
+        if loaded:
+            self.sprite = Sprite("../img/sshot.png")
+            self.x = s_pos_x + SPACESHIP_SIZE_X / 2 - 5
+            self.y = s_pos_y - SHOT_SIZE_Y
+        else:
+            self.sprite = Sprite("../img/shot.png")
+            self.x = s_pos_x + SPACESHIP_SIZE_X / 2
+            self.y = s_pos_y - SHOT_SIZE_Y
+        self.sprite.set_position(self.x, self.y)
+
+    def set_position(self, x, y):
+        self.x = x
+        self.y = y
+        self.sprite.set_position(x, y)
+
+    def draw(self):
+        self.sprite.draw()
 
 
 main()
